@@ -18,7 +18,6 @@ keys = {
 }
 
 all_creatures = []
-all_platforms = []
 
 
 def touching(rect_1, rect_2):
@@ -57,24 +56,12 @@ class Movement:
             item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
             if touching(self_hb, item_hb) and item.move != self:
                 self.posx -= move_x
-                pass
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(self_hb, item_hb):
-                self.posx -= move_x
-                pass
         self.posy += move_y
         self_hb = self.posx + self.hbx, self.posy + self.hby, self.hbw, self.hbh
         for item in all_creatures:
             item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
             if touching(self_hb, item_hb) and item.move != self:
                 self.posy -= move_y
-                pass
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(self_hb, item_hb):
-                self.posy -= move_y
-                pass
 
 
 move_keys_pressed = [0] * len(pg.key.get_pressed())
@@ -94,10 +81,6 @@ def move_thread_func():
             item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
             if touching(tubby_hb, item_hb) and item.move != Tubby.move:
                 tubby_touching_ground = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(tubby_hb, item_hb):
-                tubby_touching_ground = True
 
         Tubby.move.posy -= 2
 
@@ -106,10 +89,6 @@ def move_thread_func():
         for item in all_creatures:
             item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
             if touching(tubby_hb, item_hb) and item.move != Tubby.move:
-                tubby_touching_roof = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(tubby_hb, item_hb):
                 tubby_touching_roof = True
 
         Tubby.move.posy += 1
@@ -122,22 +101,15 @@ def move_thread_func():
             item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
             if touching(tubby_hb, item_hb) and item.move != Tubby.move:
                 tubby_touching_lwall = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(tubby_hb, item_hb):
-                tubby_touching_lwall = True
 
         Tubby.move.posx += 2
 
         tubby_touching_rwall = False
+        tubby_touching_roof = False
         tubby_hb = Tubby.move.posx + Tubby.move.hbx, Tubby.move.posy + Tubby.move.hby, Tubby.move.hbw, Tubby.move.hbh
         for item in all_creatures:
             item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
             if touching(tubby_hb, item_hb) and item.move != Tubby.move:
-                tubby_touching_rwall = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(tubby_hb, item_hb):
                 tubby_touching_rwall = True
 
         Tubby.move.posx -= 1
@@ -183,13 +155,6 @@ def move_thread_func():
                     for y in range(0, -1 * Tubby.move.vely):
                         Tubby.move.update_pos(Tubby.move.velx / (-1 * Tubby.move.vely), -1)
 
-        """     TO DO:
-        Fix gap between platforms and players that is caused by float positions
-        """
-
-#        Tubby.move.posx = round(Tubby.move.posx)
-#        Tubby.move.posy = round(Tubby.move.posy)
-
         pass
 
         Lanky.move.posy += 1
@@ -200,10 +165,6 @@ def move_thread_func():
             item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
             if touching(lanky_hb, item_hb) and item.move != Lanky.move:
                 lanky_touching_ground = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(lanky_hb, item_hb):
-                lanky_touching_ground = True
 
         Lanky.move.posy -= 2
 
@@ -212,10 +173,6 @@ def move_thread_func():
         for item in all_creatures:
             item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
             if touching(lanky_hb, item_hb) and item.move != Lanky.move:
-                lanky_touching_roof = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(lanky_hb, item_hb):
                 lanky_touching_roof = True
 
         Lanky.move.posy += 1
@@ -228,10 +185,6 @@ def move_thread_func():
             item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
             if touching(lanky_hb, item_hb) and item.move != Lanky.move:
                 lanky_touching_lwall = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(lanky_hb, item_hb):
-                lanky_touching_lwall = True
 
         Lanky.move.posx += 2
 
@@ -240,10 +193,6 @@ def move_thread_func():
         for item in all_creatures:
             item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
             if touching(lanky_hb, item_hb) and item.move != Lanky.move:
-                lanky_touching_rwall = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(lanky_hb, item_hb):
                 lanky_touching_rwall = True
 
         Lanky.move.posx -= 1
@@ -318,20 +267,6 @@ class Creature:
         self.box = Box(b_rect, b_color)
 
 
-platform_color = (0, 0, 200)
-
-
-class Platform:
-    def __init__(self, rect, color=platform_color):
-        all_platforms.append(self)
-        self.x = rect[0]
-        self.y = rect[1]
-        self.w = rect[2]
-        self.h = rect[3]
-        self.rect = self.x, self.y, self.w, self.h
-        self.box = Box(rect, color)
-
-
 Tubby = Creature(10, (1000, 920), (0, 0), (0, 0, 90, 90))
 Tubby.create_box(Tubby.move.hb(), (200, 0, 0))
 
@@ -340,32 +275,46 @@ Lanky.create_box(Lanky.move.hb(), (0, 200, 200))
 
 pass
 
-floor = Platform((0, 1030, 1920, 50), (0, 200, 0))
+floor = Creature(1, (0, 1030), (0, 0), (0, 0, 1920, 50))
+floor.create_box(floor.move.hb(), (0, 200, 0))
 
-lwall = Platform((-1, -1, 1, 1080))
+lwall = Creature(1, (-1, -1), (0, 0), (0, 0, 1, 1080))
+lwall.create_box(lwall.move.hb(), (0, 0, 200))
 
-rwall = Platform((1920, -1, 1, 1080))
+rwall = Creature(1, (1920, -1), (0, 0), (0, 0, 1, 1080))
+rwall.create_box(rwall.move.hb(), (0, 0, 200))
 
-Roof = Platform((-1, -1, 1922, 1))
+Roof = Creature(1, (-1, -1), (0, 0), (0, 0, 1922, 1))
+Roof.create_box(Roof.move.hb(), (0, 0, 200))
 
 pass
 
-Wall1 = Platform((610, 330, 100, 700))
+Wall1 = Creature(1, (610, 330), (0, 0), (0, 0, 100, 700))
+Wall1.create_box(Wall1.move.hb(), (0, 0, 200))
 
-lPlatform1 = Platform((10, 830, 150, 25))
+lPlatform1 = Creature(1, (10, 830), (0, 0), (0, 0, 150, 25))
+lPlatform1.create_box(lPlatform1.move.hb(), (0, 0, 200))
 
-lPlatform2 = Platform((360, 630, 150, 25))
+lPlatform2 = Creature(1, (360, 630), (0, 0), (0, 0, 150, 25))
+lPlatform2.create_box(lPlatform2.move.hb(), (0, 0, 200))
 
-lPlatform3 = Platform((110, 430, 150, 25))
+lPlatform3 = Creature(1, (110, 430), (0, 0), (0, 0, 150, 25))
+lPlatform3.create_box(lPlatform3.move.hb(), (0, 0, 200))
 
-Wall2 = Platform((1510, 430, 400, 600))
-Wall2sub1 = Platform((1410, 830, 100, 200))
+Wall2 = Creature(1, (1510, 430), (0, 0), (0, 0, 400, 600))
+Wall2.create_box(Wall2.move.hb(), (0, 0, 200))
+Wall2sub1 = Creature(1, (1410, 830), (0, 0), (0, 0, 100, 200))
+Wall2sub1.create_box(Wall2sub1.move.hb(), (0, 0, 200))
 
-rPlatform1 = Platform((1050, 680, 100, 25))
-rPlatform1sub1 = Platform((1125, 655, 25, 25))
+rPlatform1 = Creature(1, (1050, 680), (0, 0), (0, 0, 100, 25))
+rPlatform1.create_box(rPlatform1.move.hb(), (0, 0, 200))
+rPlatform1sub1 = Creature(1, (1125, 655), (0, 0), (0, 0, 25, 25))
+rPlatform1sub1.create_box(rPlatform1sub1.move.hb(), (0, 0, 200))
 
-rPlatform2 = Platform((850, 530, 100, 25))
-rPlatform2sub1 = Platform((925, 505, 25, 25))
+rPlatform2 = Creature(1, (850, 530), (0, 0), (0, 0, 100, 25))
+rPlatform2.create_box(rPlatform2.move.hb(), (0, 0, 200))
+rPlatform2sub1 = Creature(1, (925, 505), (0, 0), (0, 0, 25, 25))
+rPlatform2sub1.create_box(rPlatform2sub1.move.hb(), (0, 0, 200))
 
 # Platform3 = Creature(1, (0, 570), (0, 0), (0, 0, 200, 100))
 # Platform3.create_box(Platform3.move.hb(), (0, 0, 200))
@@ -393,10 +342,6 @@ while running:
         creature_x = creature.move.posx + creature.box.x
         creature_y = creature.move.posy + creature.box.y
         pg.draw.rect(screen, creature.box.color, (creature_x, creature_y, creature.box.w, creature.box.h))
-    for platform in all_platforms:
-        pg.draw.rect(screen, platform.box.color, (platform.x, platform.y, platform.w, platform.h))
-
-    print(Lanky.move.pos())
 
     pg.display.flip()
 
