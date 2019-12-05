@@ -18,7 +18,6 @@ keys = {
 }
 
 all_creatures = []
-all_platforms = []
 
 
 def touching(rect_1, rect_2):
@@ -318,12 +317,11 @@ class Creature:
         self.box = Box(b_rect, b_color)
 
 
-platform_color = (0, 0, 200)
+platform_default_color = (0, 0, 200)
 
 
 class Platform:
-    def __init__(self, rect, color=platform_color):
-        all_platforms.append(self)
+    def __init__(self, rect, color):
         self.x = rect[0]
         self.y = rect[1]
         self.w = rect[2]
@@ -332,43 +330,29 @@ class Platform:
         self.box = Box(rect, color)
 
 
+all_platforms = []
+
+level_file = open('Level Platforms.txt')
+level_lines = level_file.readlines()
+
+for line in level_lines:
+    platform_data = eval(line)
+
+    if type(platform_data[0]) == tuple:
+        platform_rect = platform_data[0]
+        platform_color = platform_data[1]
+    else:
+        platform_rect = platform_data
+        platform_color = platform_default_color
+
+    platform_temp = Platform(platform_rect, platform_color)
+    all_platforms.append(platform_temp)
+
 Tubby = Creature(10, (1000, 920), (0, 0), (0, 0, 90, 90))
 Tubby.create_box(Tubby.move.hb(), (200, 0, 0))
 
 Lanky = Creature(10, (450, 820), (0, 0), (0, 0, 90, 190))
 Lanky.create_box(Lanky.move.hb(), (0, 200, 200))
-
-pass
-
-floor = Platform((0, 1030, 1920, 50), (0, 200, 0))
-
-lwall = Platform((-1, -1, 1, 1080))
-
-rwall = Platform((1920, -1, 1, 1080))
-
-Roof = Platform((-1, -1, 1922, 1))
-
-pass
-
-Wall1 = Platform((610, 330, 100, 700))
-
-lPlatform1 = Platform((10, 830, 150, 25))
-
-lPlatform2 = Platform((360, 630, 150, 25))
-
-lPlatform3 = Platform((110, 430, 150, 25))
-
-Wall2 = Platform((1510, 430, 400, 600))
-Wall2sub1 = Platform((1410, 830, 100, 200))
-
-rPlatform1 = Platform((1050, 680, 100, 25))
-rPlatform1sub1 = Platform((1125, 655, 25, 25))
-
-rPlatform2 = Platform((850, 530, 100, 25))
-rPlatform2sub1 = Platform((925, 505, 25, 25))
-
-# Platform3 = Creature(1, (0, 570), (0, 0), (0, 0, 200, 100))
-# Platform3.create_box(Platform3.move.hb(), (0, 0, 200))
 
 move_thread_func()
 
