@@ -1,36 +1,36 @@
-import pygame as pg
-import threading
-import math
+import pygame as pg  # pygame is used for graphics and keyboard interaction
+import threading  # threading is used for keeping movement and animation ata a consistent speed
+import math  # math is used for math wow!
 
 pg.init()
 
-running = True
+running = True  # this is the variable that keeps track of if the program should quit or not
 
+# Initialise a full screen display object
 screen = pg.display.set_mode((1920, 1080), pg.FULLSCREEN)
 pg.display.set_caption("Lanky and Tubby")
 screen.fill((100, 100, 100))
 pg.display.flip()
 
+# set up a key states list for key interactions. This way you can tell how long a key has been pressed
 pg.event.get()
 key_states = [0] * len(pg.key.get_pressed())
-keys = {
-    "esc": 27, "w": 119, "a": 97, "s": 115, "d": 100
-}
+keys = {"esc": 27, "w": 119, "a": 97, "s": 115, "d": 100}  # define important keys
 
-all_creatures = []
+all_creatures = []  # create an empty list to keep track of all creatures that are created
+all_platforms = []  # create an empty list to keep track of all platforms that are created
 
 
 def touching(rect_1, rect_2):
-    touching_x = rect_2[0] < rect_1[0] + rect_1[2] and rect_1[0] < rect_2[0] + rect_2[2]
-    touching_y = rect_2[1] < rect_1[1] + rect_1[3] and rect_1[1] < rect_2[1] + rect_2[3]
-    if touching_x and touching_y:
-        return True
-    return False
+    touching_x = rect_2[0] < rect_1[0] + rect_1[2] and rect_1[0] < rect_2[0] + rect_2[2]  # overlap on x axis?
+    touching_y = rect_2[1] < rect_1[1] + rect_1[3] and rect_1[1] < rect_2[1] + rect_2[3]  # overlap on y axis?
+    if touching_x and touching_y:  # if the two rectangles overlap in both axises...
+        return True  # they are touching
+    return False  # otherwise they are not touching
 
 
-class Movement:
-    def __init__(self, refresh_rate, position=(0, 0), velocity=(0, 0), hitbox=(0, 0, 0, 0)):
-        self.rr = refresh_rate
+class Movement:  # this is the class that manages movement, velocities, collisions, and hitboxes.
+    def __init__(self, position=(0, 0), velocity=(0, 0), hitbox=(0, 0, 0, 0)):
         self.posx = position[0]
         self.posy = position[1]
         self.velx = velocity[0]
@@ -40,59 +40,64 @@ class Movement:
         self.hbw = hitbox[2]
         self.hbh = hitbox[3]
 
-    def pos(self):
+    def pos(self):  # returns position as a tuple
         return self.posx, self.posy
 
-    def vel(self):
+    def vel(self):  # returns velocity as a tuple
         return self.velx, self.vely
 
-    def hb(self):
+    def hb(self):  # returns hitbox as a tuple
         return self.hbx, self.hby, self.hbw, self.hbh
 
     def update_pos(self, move_x, move_y):
-        self.posx += move_x
-        self_hb = self.posx + self.hbx, self.posy + self.hby, self.hbw, self.hbh
-        for item in all_creatures:
+        self.posx += move_x  # move how much you need to move along the x axis
+        self_hb = self.posx + self.hbx, self.posy + self.hby, self.hbw, self.hbh  # calculate hitbox
+        for item in all_creatures:  # do this for every creature
+            # calculate the hitbox of the current creature
             item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
-            if touching(self_hb, item_hb) and item.move != self:
-                self.posx -= move_x
+            if touching(self_hb, item_hb) and item.move != self:  # if the creatures are touching and not the same...
+                self.posx -= move_x  # move back to where you were
                 pass
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(self_hb, item_hb):
-                self.posx -= move_x
-                pass
-        self.posy += move_y
-        self_hb = self.posx + self.hbx, self.posy + self.hby, self.hbw, self.hbh
-        for item in all_creatures:
+        for item in all_platforms:  # do this for every platform
+            if touching(self_hb, item.hb()):  # if they are touching...
+                self.posx -= move_x  # move back to where you were
+                pass  # you don't need to check to see if you are touching anything else
+        self.posy += move_y  # move how much you need to move along the y axis
+        self_hb = self.posx + self.hbx, self.posy + self.hby, self.hbw, self.hbh  # calculate hitbox
+        for item in all_creatures:  # do this for every creature
+            # calculate the hitbox of the current creature
             item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
-            if touching(self_hb, item_hb) and item.move != self:
-                self.posy -= move_y
-                pass
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(self_hb, item_hb):
-                self.posy -= move_y
-                pass
+            if touching(self_hb, item_hb) and item.move != self: # if the creatures are touching and not the same...
+                self.posy -= move_y # move back to where you were
+                pass  # you don't need to check to see if you are touching anything else
+        for item in all_platforms:  # do this for every platform
+            if touching(self_hb, item.hb()):  # if they are touching...
+                self.posy -= move_y # move back to where you were
+                pass  # you don't need to check to see if you are touching anything else
 
 
-move_keys_pressed = [0] * len(pg.key.get_pressed())
+move_keys_pressed = [0] * len(pg.key.get_pressed())  # this is a list similar to key_states, but far each movement frame
 
+# set maximum velocities for characters
 Tubby_max_vel = 10
 Lanky_max_vel = 10
 
 
-def move_thread_func():
+def move_thread_func():  # thread function for movement to keep movement speed consistent.
     global move_keys_pressed
-    if running:
-        Tubby.move.posy += 1
+    if running:  # if the program shouldn't quit
 
-        tubby_touching_ground = False
+        # check to see if tubby is touching the ground
+        Tubby.move.posy += 1  # move down 1
+
+        tubby_touching_ground = False  # default touching value is false
+        # calculate tubby's hitbox
         tubby_hb = Tubby.move.posx + Tubby.move.hbx, Tubby.move.posy + Tubby.move.hby, Tubby.move.hbw, Tubby.move.hbh
-        for item in all_creatures:
+        for item in all_creatures:  # for every creature
+            # calculate the creature's hitbox
             item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
-            if touching(tubby_hb, item_hb) and item.move != Tubby.move:
-                tubby_touching_ground = True
+            if touching(tubby_hb, item_hb) and item.move != Tubby.move:  # if the creatures touch and are different...
+                tubby_touching_ground = True  # then tubby is touching the ground
         for item in all_platforms:
             item_hb = item.x, item.y, item.w, item.h
             if touching(tubby_hb, item_hb):
@@ -186,8 +191,8 @@ def move_thread_func():
         Fix gap between platforms and players that is caused by float positions
         """
 
-#        Tubby.move.posx = round(Tubby.move.posx)
-#        Tubby.move.posy = round(Tubby.move.posy)
+        #        Tubby.move.posx = round(Tubby.move.posx)
+        #        Tubby.move.posy = round(Tubby.move.posy)
 
         pass
 
@@ -307,8 +312,8 @@ class Box:
 
 
 class Creature:
-    def __init__(self, m_refresh_rate, m_position=(0, 0), m_velocity=(0, 0), m_hitbox=(0, 0, 0, 0)):
-        self.move = Movement(m_refresh_rate, m_position, m_velocity, m_hitbox)
+    def __init__(self, m_position=(0, 0), m_velocity=(0, 0), m_hitbox=(0, 0, 0, 0)):
+        self.move = Movement(m_position, m_velocity, m_hitbox)
         all_creatures.append(self)
         self.box = None
         self.animations = {}
@@ -329,8 +334,9 @@ class Platform:
         self.rect = self.x, self.y, self.w, self.h
         self.box = Box(rect, color)
 
+    def hb(self):
+        return self.x, self.y, self.w, self.h
 
-all_platforms = []
 
 level_file = open('Level Platforms.txt')
 level_lines = level_file.readlines()
@@ -348,10 +354,10 @@ for line in level_lines:
     platform_temp = Platform(platform_rect, platform_color)
     all_platforms.append(platform_temp)
 
-Tubby = Creature(10, (1000, 920), (0, 0), (0, 0, 90, 90))
+Tubby = Creature((1000, 920), (0, 0), (0, 0, 90, 90))
 Tubby.create_box(Tubby.move.hb(), (200, 0, 0))
 
-Lanky = Creature(10, (450, 820), (0, 0), (0, 0, 90, 190))
+Lanky = Creature((450, 820), (0, 0), (0, 0, 90, 190))
 Lanky.create_box(Lanky.move.hb(), (0, 200, 200))
 
 move_thread_func()
@@ -379,8 +385,6 @@ while running:
         pg.draw.rect(screen, creature.box.color, (creature_x, creature_y, creature.box.w, creature.box.h))
     for platform in all_platforms:
         pg.draw.rect(screen, platform.box.color, (platform.x, platform.y, platform.w, platform.h))
-
-    print(Lanky.move.pos())
 
     pg.display.flip()
 
