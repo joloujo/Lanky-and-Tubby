@@ -77,8 +77,18 @@ Lanky_max_vel = 10
 
 
 def move_thread_func():  # thread function for movement to keep movement speed consistent.
-    global move_keys_pressed
+
+    global move_keys_pressed  # make move_keys_pressed accessible in this function
+
     if running:  # if the program shouldn't quit
+
+        move_thread = threading.Timer(1 / 100, move_thread_func)  # redefine the function so it can run again
+        move_thread.start()  # restart the function
+
+        left_pressed = move_keys_pressed[keys["a"]] >= 1 or move_keys_pressed[keys["left"]] >= 1
+        right_pressed = move_keys_pressed[keys["d"]] >= 1 or move_keys_pressed[keys["right"]] >= 1
+
+        # *add jump_pressed for jumping*
 
         Tubby.move.posy += 1  # move down 1 to check floor
 
@@ -109,7 +119,8 @@ def move_thread_func():  # thread function for movement to keep movement speed c
         Tubby.move.posx -= 1  # move left 1 to undo the last check
 
         if tubby_touching_ground:  # if tubby is on the ground...
-            if move_keys_pressed[keys["w"]] >= 1:  # if the player is trying to jump
+            # if the player is trying to jump
+            if move_keys_pressed[keys["w"]] >= 1 or move_keys_pressed[keys["up"]] >= 1:
                 Tubby.move.vely = -20  # jump
             else:
                 Tubby.move.vely = 0  # otherwise stay don't jump and don't accelerate downwards.
@@ -119,17 +130,16 @@ def move_thread_func():  # thread function for movement to keep movement speed c
 
         # if tubby is going in a direction and hits something on that side
         if tubby_touching_lwall and Tubby.move.velx < 0 or tubby_touching_rwall and Tubby.move.velx > 0:
-            # stop going moving side to side
-            Tubby.move.velx = 0
+            Tubby.move.velx = 0  # stop going moving side to side
 
         if not tubby_touching_ground:  # if tubby is in the air
             Tubby.move.vely += 1  # experience gravity
 
         # if left is pressed and tubby isn't going too fast
-        if move_keys_pressed[keys["a"]] >= 1 and Tubby.move.velx > -1 * Tubby_max_vel:
+        if left_pressed >= 1 and Tubby.move.velx > -1 * Tubby_max_vel:
             Tubby.move.velx -= 1  # accelerate left
         # if right is pressed and tubby isn't going too fast
-        elif move_keys_pressed[keys["d"]] >= 1 and Tubby.move.velx < Tubby_max_vel:
+        elif right_pressed >= 1 and Tubby.move.velx < Tubby_max_vel:
             Tubby.move.velx += 1  # accelerate right
         else:  # if tubby does not accelerate left or right
             if Tubby.move.velx < 0:  # if tubby is moving left
@@ -138,7 +148,7 @@ def move_thread_func():  # thread function for movement to keep movement speed c
                 Tubby.move.velx -= 1  # decelerate right (accelerate left until 0)
 
         """
-        to do: change above so velocity does not fluctuate between max and max-1.
+        *to do: change above so velocity does not fluctuate between max and max-1.*
         """
 
         if Tubby.move.vel() != (0, 0):  # if tubby is moving
@@ -163,62 +173,52 @@ def move_thread_func():  # thread function for movement to keep movement speed c
                         Tubby.move.update_pos(Tubby.move.velx / (-1 * Tubby.move.vely), -1)
 
         """     TO DO:
-        Fix gap between platforms and players that is caused by float positions
+        *Fix gap between platforms and players that is caused by float positions*
         """
 
         #        Tubby.move.posx = round(Tubby.move.posx)
         #        Tubby.move.posy = round(Tubby.move.posy)
 
-        Lanky.move.posy += 1
+        Lanky.move.posy += 1  # move down 1 to check floor
 
-        lanky_touching_ground = False
+        lanky_touching_ground = False  # default value is false
         if Lanky.move.colliding():  # check if you are colliding
-            lanky_touching_ground = True
+            lanky_touching_ground = True  # if so, lanky is touching the ground
 
         Lanky.move.posy -= 2
 
-        lanky_touching_roof = False
+        lanky_touching_roof = False  # default value is false
         if Lanky.move.colliding():  # check if you are colliding
-            lanky_touching_roof = True
+            lanky_touching_roof = True  # if so, lanky is touching the roof
 
-        Lanky.move.posy += 1
+        Lanky.move.posy += 1  # move down 1 to undo the last check
 
-        Lanky.move.posx -= 1
+        Lanky.move.posx -= 1  # move left 1 to check left wall
 
-        lanky_touching_lwall = False
+        lanky_touching_lwall = False  # default value is false
         if Lanky.move.colliding():  # check if you are colliding
-            lanky_touching_lwall = True
+            lanky_touching_lwall = True  # if so, lanky is touching the left wall
 
-        Lanky.move.posx += 2
+        Lanky.move.posx += 2  # move right 2 to undo the last check and to check right wall
 
-        lanky_touching_rwall = False
+        lanky_touching_rwall = False  # default value is false
         if Lanky.move.colliding():  # check if you are colliding
-            lanky_touching_rwall = True
+            lanky_touching_rwall = True  # if so, lanky is touching the right wall
 
-        Lanky.move.posx -= 1
+        Lanky.move.posx -= 1  # move left 1 to undo the last check
 
-        if lanky_touching_ground:
-            if move_keys_pressed[keys["w"]] >= 1:
-                Lanky.move.vely = -20
+        if lanky_touching_ground:  # if lanky is on the ground...
+            # if the player is trying to jump
+            if move_keys_pressed[keys["w"]] >= 1 or move_keys_pressed[keys["up"]] >= 1:
+                Lanky.move.vely = -20  # jump
             else:
-                Lanky.move.vely = 0
+                Lanky.move.vely = 0  # otherwise stay don't jump and don't accelerate downwards.
 
-        if lanky_touching_roof and Lanky.move.vely < 0:
-            Lanky.move.vely = 0
+        if lanky_touching_roof and Lanky.move.vely < 0:  # if lanky is going up and hits the roof...
+            Lanky.move.vely = 0  # stop going upwards
 
+        # if lanky is going in a direction and hits something on that side
         if lanky_touching_lwall and Lanky.move.velx < 0 or lanky_touching_rwall and Lanky.move.velx > 0:
-            Lanky.move.velx = 0
-        if not lanky_touching_ground:
-            Lanky.move.vely += 1
-        if move_keys_pressed[keys["a"]] >= 1 and Lanky.move.velx > -1 * Lanky_max_vel:
-            Lanky.move.velx -= 1
-        elif move_keys_pressed[keys["d"]] >= 1 and Lanky.move.velx < Lanky_max_vel:
-            Lanky.move.velx += 1
-        else:
-            if -1 * Lanky_max_vel <= Lanky.move.velx < 0:
-                Lanky.move.velx += 1
-            elif Lanky_max_vel >= Lanky.move.velx > 0:
-                Lanky.move.velx -= 1
             Lanky.move.velx = 0  # stop going moving side to side
 
         if not lanky_touching_ground:  # if lanky is in the air
@@ -258,6 +258,10 @@ def move_thread_func():  # thread function for movement to keep movement speed c
                         Lanky.move.update_pos(Lanky.move.velx / (-1 * Lanky.move.vely), -1)
 
         move_keys_pressed = [0] * len(pg.key.get_pressed())  # reset the keys that have been pressed
+
+
+def animation_thread_func():
+    pass
 
 
 class Box:  # Box is a class for displaying a rectangle
