@@ -157,7 +157,7 @@ def move_thread_func():  # thread function for movement to keep movement speed c
                         # move the corresponding amount along the x axis so tubby travels at the correct angle.
                         Tubby.move.update_pos(Tubby.move.velx / Tubby.move.vely, 1)
                 else:  # if tubby is moving up (negative y)
-                    for y in range(0, -1 * Tubby.move.vely):# for each pixel tubby moves along the y axis
+                    for y in range(0, -1 * Tubby.move.vely):  # for each pixel tubby moves along the y axis
                         # move the corresponding amount along the x axis so tubby travels at the correct angle.
                         Tubby.move.update_pos(Tubby.move.velx / (-1 * Tubby.move.vely), -1)
 
