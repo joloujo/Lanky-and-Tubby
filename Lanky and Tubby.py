@@ -15,7 +15,8 @@ pg.display.flip()
 # set up a key states list for key interactions. This way you can tell how long a key has been pressed
 pg.event.get()
 key_states = [0] * len(pg.key.get_pressed())
-keys = {"esc": 27, "w": 119, "a": 97, "s": 115, "d": 100}  # define important keys
+# define important keys
+keys = {"esc": 27, "w": 119, "a": 97, "s": 115, "d": 100, "up": 273, "down": 274, "right": 275, "left": 276}
 
 all_creatures = []  # create an empty list to keep track of all creatures that are created
 all_platforms = []  # create an empty list to keep track of all platforms that are created
@@ -207,10 +208,8 @@ def move_thread_func():  # thread function for movement to keep movement speed c
 
         if lanky_touching_lwall and Lanky.move.velx < 0 or lanky_touching_rwall and Lanky.move.velx > 0:
             Lanky.move.velx = 0
-
         if not lanky_touching_ground:
             Lanky.move.vely += 1
-
         if move_keys_pressed[keys["a"]] >= 1 and Lanky.move.velx > -1 * Lanky_max_vel:
             Lanky.move.velx -= 1
         elif move_keys_pressed[keys["d"]] >= 1 and Lanky.move.velx < Lanky_max_vel:
@@ -220,120 +219,141 @@ def move_thread_func():  # thread function for movement to keep movement speed c
                 Lanky.move.velx += 1
             elif Lanky_max_vel >= Lanky.move.velx > 0:
                 Lanky.move.velx -= 1
+            Lanky.move.velx = 0  # stop going moving side to side
 
-        if Lanky.move.vel() != (0, 0):
+        if not lanky_touching_ground:  # if lanky is in the air
+            Lanky.move.vely += 1  # experience gravity
+
+        # if left is pressed and lanky isn't going too fast
+        if left_pressed >= 1 and Lanky.move.velx > -1 * Lanky_max_vel:
+            Lanky.move.velx -= 1  # accelerate left
+        # if right is pressed and lanky isn't going too fast
+        elif right_pressed >= 1 and Lanky.move.velx < Lanky_max_vel:
+            Lanky.move.velx += 1  # accelerate right
+        else:  # if lanky does not accelerate left or right
+            if -1 * Lanky_max_vel <= Lanky.move.velx < 0:  # if lanky is moving left
+                Lanky.move.velx += 1  # decelerate left (accelerate right until 0)
+            elif Lanky_max_vel >= Lanky.move.velx > 0:  # if lanky is moving right
+                Lanky.move.velx -= 1  # decelerate right (accelerate left until 0)
+
+        if Lanky.move.vel() != (0, 0):  # if lanky is moving
+            # if there is more movement along the x axis rather than the y axis
             if math.fabs(Lanky.move.velx) > math.fabs(Lanky.move.vely):
-                if Lanky.move.velx > 0:
-                    for x in range(0, Lanky.move.velx):
+                if Lanky.move.velx > 0:  # if lanky is moving right (positive x)
+                    for x in range(0, Lanky.move.velx):  # for each pixel lanky moves along the x axis
+                        # move the corresponding amount along the y axis so lanky travels at the correct angle.
                         Lanky.move.update_pos(1, Lanky.move.vely / Lanky.move.velx)
-                else:
-                    for x in range(0, -1 * Lanky.move.velx):
+                else:  # if lanky is moving left (negative x)
+                    for x in range(0, -1 * Lanky.move.velx):  # for each pixel lanky moves along the x axis
+                        # move the corresponding amount along the y axis so lanky travels at the correct angle.
                         Lanky.move.update_pos(-1, Lanky.move.vely / (-1 * Lanky.move.velx))
-            else:
-                if Lanky.move.vely > 0:
-                    for y in range(0, Lanky.move.vely):
+            else:  # if there is more movement along the y axis rather than the x axis
+                if Lanky.move.vely > 0:  # if lanky is moving down (positive y)
+                    for y in range(0, Lanky.move.vely):  # for each pixel lanky moves along the y axis
+                        # move the corresponding amount along the x axis so lanky travels at the correct angle.
                         Lanky.move.update_pos(Lanky.move.velx / Lanky.move.vely, 1)
-                else:
-                    for y in range(0, -1 * Lanky.move.vely):
+                else:  # if lanky is moving up (negative y)
+                    for y in range(0, -1 * Lanky.move.vely):  # for each pixel lanky moves along the y axis
+                        # move the corresponding amount along the x axis so lanky travels at the correct angle.
                         Lanky.move.update_pos(Lanky.move.velx / (-1 * Lanky.move.vely), -1)
 
-        move_keys_pressed = [0] * len(pg.key.get_pressed())
-
-        move_thread = threading.Timer(1 / 100, move_thread_func)
-        move_thread.start()
+        move_keys_pressed = [0] * len(pg.key.get_pressed())  # reset the keys that have been pressed
 
 
-class Box:
+class Box:  # Box is a class for displaying a rectangle
     def __init__(self, rect, color):
-        self.x = rect[0]
-        self.y = rect[1]
-        self.w = rect[2]
-        self.h = rect[3]
-        self.color = color
+        self.x = rect[0]  # x position
+        self.y = rect[1]  # y position
+        self.w = rect[2]  # width
+        self.h = rect[3]  # height
+        self.color = color  # color in (r, g, b)
 
-    def rect(self):
+    def rect(self):  # function that returns the box's rectangle as a tuple
         return self.x, self.y, self.w, self.h
 
 
-class Creature:
+class Creature:  # Creature is a class for lanky and tubby
     def __init__(self, m_position=(0, 0), m_velocity=(0, 0), m_hitbox=(0, 0, 0, 0)):
-        self.move = Movement(m_position, m_velocity, m_hitbox)
-        all_creatures.append(self)
-        self.box = None
-        self.animations = {}
+        self.move = Movement(m_position, m_velocity, m_hitbox)  # create a movement subclass for each creature
+        all_creatures.append(self)  # add each new creature to the creature list
+        self.box = None  # no box... for now.
+        self.animations = {}  # no animations: *in development*
 
-    def create_box(self, b_rect, b_color):
+    def create_box(self, b_rect, b_color):  # create a box if a box is needed
         self.box = Box(b_rect, b_color)
 
-    def hb(self):
+    def hb(self):  # return hitbox as a tuple
         return self.move.posx + self.move.hbx, self.move.posy + self.move.hby, self.move.hbw, self.move.hbh
 
 
-platform_default_color = (0, 0, 200)
+platform_default_color = (0, 0, 200)  # this is the default platform color
 
 
-class Platform:
+class Platform:  # Platform class is for platforms.
     def __init__(self, rect, color):
-        self.x = rect[0]
-        self.y = rect[1]
-        self.w = rect[2]
-        self.h = rect[3]
-        self.rect = self.x, self.y, self.w, self.h
-        self.box = Box(rect, color)
+        self.x = rect[0]  # x position
+        self.y = rect[1]  # y position
+        self.w = rect[2]  # width
+        self.h = rect[3]  # height
+        self.rect = self.x, self.y, self.w, self.h  # the platforms initial rectangle *Fix so it updates constantly*
+        self.box = Box(rect, color)  # create a box based on the rectangle
 
-    def hb(self):
+    def hb(self):  # returns hitbox as a rect syntax tuple
         return self.x, self.y, self.w, self.h
 
 
-level_file = open('Level Platforms.txt')
-level_lines = level_file.readlines()
+level_file = open('Level Platforms.txt')  # open the file that has the level data
+level_lines = level_file.readlines()  # create a list with each element being a line in the file
 
-for line in level_lines:
-    platform_data = eval(line)
+for line in level_lines:  # for each line in the level...
+    platform_data = eval(line)  # evaluate turns the string into a tuple containing the level data
 
+    # if the tuple has sub-tuples, the first item of the tuple will also be a tuple. Then it has an assigned color
     if type(platform_data[0]) == tuple:
-        platform_rect = platform_data[0]
-        platform_color = platform_data[1]
+        platform_rect = platform_data[0]  # the rectangle is the first tuple
+        platform_color = platform_data[1]  # the color is the second tuple
     else:
-        platform_rect = platform_data
-        platform_color = platform_default_color
+        platform_rect = platform_data  # the rectangle is the tuple
+        platform_color = platform_default_color  # the color is the default platform color
 
-    platform_temp = Platform(platform_rect, platform_color)
-    all_platforms.append(platform_temp)
+    platform_temp = Platform(platform_rect, platform_color)  # create a platform with the proper rect and color
+    all_platforms.append(platform_temp)  # add that platform to the platform list *move to the class init() function*
 
-Tubby = Creature((1000, 920), (0, 0), (0, 0, 90, 90))
-Tubby.create_box(Tubby.move.hb(), (200, 0, 0))
+Tubby = Creature((1000, 920), (0, 0), (0, 0, 90, 90))  # create the creature that represents tubby
+Tubby.create_box(Tubby.move.hb(), (200, 0, 0))  # create a box to show the hitbox of tubby
 
-Lanky = Creature((450, 820), (0, 0), (0, 0, 90, 190))
-Lanky.create_box(Lanky.move.hb(), (0, 200, 200))
+Lanky = Creature((450, 820), (0, 0), (0, 0, 90, 190))  # create a creature that represents lanky
+Lanky.create_box(Lanky.move.hb(), (0, 200, 200))  # create a box to show the hitbox of lanky
 
-move_thread_func()
+move_thread_func()  # start the move function loop
 
-while running:
-    for event in pg.event.get():
+while running:  # if the program is running...
+    for event in pg.event.get():  # check to see if the | x | button is clicked, and if so, close the tab
         if event.type == pg.QUIT:
             running = False
 
-    for key_id in range(0, len(pg.key.get_pressed())):
-        if pg.key.get_pressed()[key_id] == 1:
-            key_states[key_id] += 1
-            move_keys_pressed[key_id] = 1
-        else:
-            key_states[key_id] = 0
+    for key_id in range(0, len(pg.key.get_pressed())):  # for every key...
+        if pg.key.get_pressed()[key_id] == 1:  # if that key is pressed...
+            key_states[key_id] += 1  # change how long the key has been pressed for by 1
+            move_keys_pressed[key_id] = 1  # tell the movement function the key has been pressed in the past frame
+        else:  # if that key isn't pressed
+            key_states[key_id] = 0  # then change how long the kay had been pressed for to 0
 
-    if key_states[keys["esc"]] >= 1:
-        running = False
+    if key_states[keys["esc"]] >= 1:  # if the escape key is pressed
+        running = False  # quit the game
 
-    screen.fill((100, 100, 100))
+    screen.fill((100, 100, 100))  # fill the background with the background color
 
-    for creature in all_creatures:
-        creature_x = creature.move.posx + creature.box.x
-        creature_y = creature.move.posy + creature.box.y
+    for creature in all_creatures:  # for each creature
+        creature_x = creature.move.posx + creature.box.x  # find the rect x
+        creature_y = creature.move.posy + creature.box.y  # find the rect y
+        # render that creature
         pg.draw.rect(screen, creature.box.color, (creature_x, creature_y, creature.box.w, creature.box.h))
-    for platform in all_platforms:
+    for platform in all_platforms:  # for each platform
+        # render that platform
         pg.draw.rect(screen, platform.box.color, (platform.x, platform.y, platform.w, platform.h))
 
-    pg.display.flip()
+    pg.display.flip()  # update the display window
 
-pg.quit()
-quit()
+pg.quit()  # terminate pygame
+quit()  # terminate the program
