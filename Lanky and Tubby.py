@@ -1,6 +1,6 @@
 import pygame as pg  # pygame is used for graphics and keyboard interaction
-import threading  # threading is used for keeping movement and animation ata a consistent speed
-import math  # math is used for math wow!
+import threading  # threading is used for keeping movement and animation at a consistent speed
+import math  # math is used for math, wow!
 
 pg.init()
 
@@ -49,34 +49,26 @@ class Movement:  # this is the class that manages movement, velocities, collisio
     def hb(self):  # returns hitbox as a tuple
         return self.hbx, self.hby, self.hbw, self.hbh
 
+    def colliding(self):
+        self_hb = self.posx + self.hbx, self.posy + self.hby, self.hbw, self.hbh  # calculate it's own hitbox
+        for item in all_creatures:  # do this for every creature
+            if touching(self_hb, item.hb()) and item.move != self:  # if the creatures are touching and not the same...
+                return True  # then it is colliding
+        for item in all_platforms:  # do this for every platform
+            if touching(self_hb, item.hb()):  # if the platforms are touching...
+                return True  # then it is colliding
+        return False  # if it isn't touching anything, it is not colliding
+
     def update_pos(self, move_x, move_y):
         self.posx += move_x  # move how much you need to move along the x axis
-        self_hb = self.posx + self.hbx, self.posy + self.hby, self.hbw, self.hbh  # calculate hitbox
-        for item in all_creatures:  # do this for every creature
-            # calculate the hitbox of the current creature
-            item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
-            if touching(self_hb, item_hb) and item.move != self:  # if the creatures are touching and not the same...
-                self.posx -= move_x  # move back to where you were
-                pass
-        for item in all_platforms:  # do this for every platform
-            if touching(self_hb, item.hb()):  # if they are touching...
-                self.posx -= move_x  # move back to where you were
-                pass  # you don't need to check to see if you are touching anything else
+        if self.colliding():  # check if you are colliding
+            self.posx -= move_x  # if so, move back
         self.posy += move_y  # move how much you need to move along the y axis
-        self_hb = self.posx + self.hbx, self.posy + self.hby, self.hbw, self.hbh  # calculate hitbox
-        for item in all_creatures:  # do this for every creature
-            # calculate the hitbox of the current creature
-            item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
-            if touching(self_hb, item_hb) and item.move != self: # if the creatures are touching and not the same...
-                self.posy -= move_y # move back to where you were
-                pass  # you don't need to check to see if you are touching anything else
-        for item in all_platforms:  # do this for every platform
-            if touching(self_hb, item.hb()):  # if they are touching...
-                self.posy -= move_y # move back to where you were
-                pass  # you don't need to check to see if you are touching anything else
+        if self.colliding():  # check if you are colliding
+            self.posy -= move_y  # if so, move back
 
 
-move_keys_pressed = [0] * len(pg.key.get_pressed())  # this is a list similar to key_states, but far each movement frame
+move_keys_pressed = [0] * len(pg.key.get_pressed())  # this is a list similar to key_states, but for each movement frame
 
 # set maximum velocities for characters
 Tubby_max_vel = 10
@@ -87,104 +79,86 @@ def move_thread_func():  # thread function for movement to keep movement speed c
     global move_keys_pressed
     if running:  # if the program shouldn't quit
 
-        # check to see if tubby is touching the ground
-        Tubby.move.posy += 1  # move down 1
+        Tubby.move.posy += 1  # move down 1 to check floor
 
-        tubby_touching_ground = False  # default touching value is false
-        # calculate tubby's hitbox
-        tubby_hb = Tubby.move.posx + Tubby.move.hbx, Tubby.move.posy + Tubby.move.hby, Tubby.move.hbw, Tubby.move.hbh
-        for item in all_creatures:  # for every creature
-            # calculate the creature's hitbox
-            item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
-            if touching(tubby_hb, item_hb) and item.move != Tubby.move:  # if the creatures touch and are different...
-                tubby_touching_ground = True  # then tubby is touching the ground
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(tubby_hb, item_hb):
-                tubby_touching_ground = True
+        tubby_touching_ground = False  # default value is false
+        if Tubby.move.colliding():  # check if you are colliding
+            tubby_touching_ground = True  # if so, tubby is touching the ground
 
-        Tubby.move.posy -= 2
+        Tubby.move.posy -= 2  # move up 2 to undo the last check and to check roof
 
-        tubby_touching_roof = False
-        tubby_hb = Tubby.move.posx + Tubby.move.hbx, Tubby.move.posy + Tubby.move.hby, Tubby.move.hbw, Tubby.move.hbh
-        for item in all_creatures:
-            item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
-            if touching(tubby_hb, item_hb) and item.move != Tubby.move:
-                tubby_touching_roof = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(tubby_hb, item_hb):
-                tubby_touching_roof = True
+        tubby_touching_roof = False  # default value is false
+        if Tubby.move.colliding():  # check if you are colliding
+            tubby_touching_roof = True  # if so, tubby is touching the roof
 
-        Tubby.move.posy += 1
+        Tubby.move.posy += 1  # move down 1 to undo the last check
 
-        Tubby.move.posx -= 1
+        Tubby.move.posx -= 1  # move left 1 to check left wall
 
-        tubby_touching_lwall = False
-        tubby_hb = Tubby.move.posx + Tubby.move.hbx, Tubby.move.posy + Tubby.move.hby, Tubby.move.hbw, Tubby.move.hbh
-        for item in all_creatures:
-            item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
-            if touching(tubby_hb, item_hb) and item.move != Tubby.move:
-                tubby_touching_lwall = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(tubby_hb, item_hb):
-                tubby_touching_lwall = True
+        tubby_touching_lwall = False  # default value is false
+        if Tubby.move.colliding():  # check if you are colliding
+            tubby_touching_lwall = True  # if so, tubby is touching the left wall
 
-        Tubby.move.posx += 2
+        Tubby.move.posx += 2  # move right 2 to undo the last check and to check right wall
 
-        tubby_touching_rwall = False
-        tubby_hb = Tubby.move.posx + Tubby.move.hbx, Tubby.move.posy + Tubby.move.hby, Tubby.move.hbw, Tubby.move.hbh
-        for item in all_creatures:
-            item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
-            if touching(tubby_hb, item_hb) and item.move != Tubby.move:
-                tubby_touching_rwall = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(tubby_hb, item_hb):
-                tubby_touching_rwall = True
+        tubby_touching_rwall = False  # default value is false
+        if Tubby.move.colliding():  # check if you are colliding
+            tubby_touching_rwall = True  # if so, tubby is touching the right wall
 
-        Tubby.move.posx -= 1
+        Tubby.move.posx -= 1  # move left 1 to undo the last check
 
-        if tubby_touching_ground:
-            if move_keys_pressed[keys["w"]] >= 1:
-                Tubby.move.vely = -20
+        if tubby_touching_ground:  # if tubby is on the ground...
+            if move_keys_pressed[keys["w"]] >= 1:  # if the player is trying to jump
+                Tubby.move.vely = -20  # jump
             else:
-                Tubby.move.vely = 0
+                Tubby.move.vely = 0  # otherwise stay don't jump and don't accelerate downwards.
 
-        if tubby_touching_roof and Tubby.move.vely < 0:
-            Tubby.move.vely = 0
+        if tubby_touching_roof and Tubby.move.vely < 0:  # if tubby is going up and hits the roof...
+            Tubby.move.vely = 0  # stop going upwards
 
+        # if tubby is going in a direction and hits something on that side
         if tubby_touching_lwall and Tubby.move.velx < 0 or tubby_touching_rwall and Tubby.move.velx > 0:
+            # stop going moving side to side
             Tubby.move.velx = 0
 
-        if not tubby_touching_ground:
-            Tubby.move.vely += 1
+        if not tubby_touching_ground:  # if tubby is in the air
+            Tubby.move.vely += 1  # experience gravity
 
+        # if left is pressed and tubby isn't going too fast
         if move_keys_pressed[keys["a"]] >= 1 and Tubby.move.velx > -1 * Tubby_max_vel:
-            Tubby.move.velx -= 1
+            Tubby.move.velx -= 1  # accelerate left
+        # if right is pressed and tubby isn't going too fast
         elif move_keys_pressed[keys["d"]] >= 1 and Tubby.move.velx < Tubby_max_vel:
-            Tubby.move.velx += 1
-        else:
-            if -1 * Tubby_max_vel <= Tubby.move.velx < 0:
-                Tubby.move.velx += 1
-            elif Tubby_max_vel >= Tubby.move.velx > 0:
-                Tubby.move.velx -= 1
+            Tubby.move.velx += 1  # accelerate right
+        else:  # if tubby does not accelerate left or right
+            if Tubby.move.velx < 0:  # if tubby is moving left
+                Tubby.move.velx += 1  # decelerate left (accelerate right until 0)
+            elif Tubby.move.velx > 0:  # if tubby is moving right
+                Tubby.move.velx -= 1  # decelerate right (accelerate left until 0)
 
-        if Tubby.move.vel() != (0, 0):
+        """
+        to do: change above so velocity does not fluctuate between max and max-1.
+        """
+
+        if Tubby.move.vel() != (0, 0):  # if tubby is moving
+            # if there is more movement along the x axis rather than the y axis
             if math.fabs(Tubby.move.velx) > math.fabs(Tubby.move.vely):
-                if Tubby.move.velx > 0:
-                    for x in range(0, Tubby.move.velx):
+                if Tubby.move.velx > 0:  # if tubby is moving right (positive x)
+                    for x in range(0, Tubby.move.velx):  # for each pixel tubby moves along the x axis
+                        # move the corresponding amount along the y axis so tubby travels at the correct angle.
                         Tubby.move.update_pos(1, Tubby.move.vely / Tubby.move.velx)
-                else:
-                    for x in range(0, -1 * Tubby.move.velx):
+                else:  # if tubby is moving left (negative x)
+                    for x in range(0, -1 * Tubby.move.velx):  # for each pixel tubby moves along the x axis
+                        # move the corresponding amount along the y axis so tubby travels at the correct angle.
                         Tubby.move.update_pos(-1, Tubby.move.vely / (-1 * Tubby.move.velx))
-            else:
-                if Tubby.move.vely > 0:
-                    for y in range(0, Tubby.move.vely):
+            else:  # if there is more movement along the y axis rather than the x axis
+                if Tubby.move.vely > 0:  # if tubby is moving down (positive y)
+                    for y in range(0, Tubby.move.vely):  # for each pixel tubby moves along the y axis
+                        # move the corresponding amount along the x axis so tubby travels at the correct angle.
                         Tubby.move.update_pos(Tubby.move.velx / Tubby.move.vely, 1)
-                else:
-                    for y in range(0, -1 * Tubby.move.vely):
+                else:  # if tubby is moving up (negative y)
+                    for y in range(0, -1 * Tubby.move.vely):# for each pixel tubby moves along the y axis
+                        # move the corresponding amount along the x axis so tubby travels at the correct angle.
                         Tubby.move.update_pos(Tubby.move.velx / (-1 * Tubby.move.vely), -1)
 
         """     TO DO:
@@ -194,61 +168,31 @@ def move_thread_func():  # thread function for movement to keep movement speed c
         #        Tubby.move.posx = round(Tubby.move.posx)
         #        Tubby.move.posy = round(Tubby.move.posy)
 
-        pass
-
         Lanky.move.posy += 1
 
         lanky_touching_ground = False
-        lanky_hb = Lanky.move.posx + Lanky.move.hbx, Lanky.move.posy + Lanky.move.hby, Lanky.move.hbw, Lanky.move.hbh
-        for item in all_creatures:
-            item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
-            if touching(lanky_hb, item_hb) and item.move != Lanky.move:
-                lanky_touching_ground = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(lanky_hb, item_hb):
-                lanky_touching_ground = True
+        if Lanky.move.colliding():  # check if you are colliding
+            lanky_touching_ground = True
 
         Lanky.move.posy -= 2
 
         lanky_touching_roof = False
-        lanky_hb = Lanky.move.posx + Lanky.move.hbx, Lanky.move.posy + Lanky.move.hby, Lanky.move.hbw, Lanky.move.hbh
-        for item in all_creatures:
-            item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
-            if touching(lanky_hb, item_hb) and item.move != Lanky.move:
-                lanky_touching_roof = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(lanky_hb, item_hb):
-                lanky_touching_roof = True
+        if Lanky.move.colliding():  # check if you are colliding
+            lanky_touching_roof = True
 
         Lanky.move.posy += 1
 
         Lanky.move.posx -= 1
 
         lanky_touching_lwall = False
-        lanky_hb = Lanky.move.posx + Lanky.move.hbx, Lanky.move.posy + Lanky.move.hby, Lanky.move.hbw, Lanky.move.hbh
-        for item in all_creatures:
-            item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
-            if touching(lanky_hb, item_hb) and item.move != Lanky.move:
-                lanky_touching_lwall = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(lanky_hb, item_hb):
-                lanky_touching_lwall = True
+        if Lanky.move.colliding():  # check if you are colliding
+            lanky_touching_lwall = True
 
         Lanky.move.posx += 2
 
         lanky_touching_rwall = False
-        lanky_hb = Lanky.move.posx + Lanky.move.hbx, Lanky.move.posy + Lanky.move.hby, Lanky.move.hbw, Lanky.move.hbh
-        for item in all_creatures:
-            item_hb = item.move.posx + item.move.hbx, item.move.posy + item.move.hby, item.move.hbw, item.move.hbh
-            if touching(lanky_hb, item_hb) and item.move != Lanky.move:
-                lanky_touching_rwall = True
-        for item in all_platforms:
-            item_hb = item.x, item.y, item.w, item.h
-            if touching(lanky_hb, item_hb):
-                lanky_touching_rwall = True
+        if Lanky.move.colliding():  # check if you are colliding
+            lanky_touching_rwall = True
 
         Lanky.move.posx -= 1
 
@@ -320,6 +264,9 @@ class Creature:
 
     def create_box(self, b_rect, b_color):
         self.box = Box(b_rect, b_color)
+
+    def hb(self):
+        return self.move.posx + self.move.hbx, self.move.posy + self.move.hby, self.move.hbw, self.move.hbh
 
 
 platform_default_color = (0, 0, 200)
