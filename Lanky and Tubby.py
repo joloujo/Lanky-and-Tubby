@@ -7,12 +7,15 @@ pg.init()
 
 running = True  # this is the variable that keeps track of if the program should quit or not
 
+tubby_touching_ground = True
+lanky_touching_ground = True
+
 tubby_char_sheet_PIL = Image.open("tubby_char_sheet.png")
-tubby_animation = "idle"
+tubby_animation = "idle right"
 tubby_animation_timer = 0
 tubby_to_render = (0, 0, 1, 1)
 
-tubby_char_sheet_PIL.thumbnail((720, 270), Image.ANTIALIAS)
+tubby_char_sheet_PIL.thumbnail((960, 600), Image.ANTIALIAS)
 tubby_char_sheet_string = tubby_char_sheet_PIL.tobytes(), tubby_char_sheet_PIL.size, tubby_char_sheet_PIL.mode
 tubby_char_sheet = pg.image.fromstring(tubby_char_sheet_PIL.tobytes(), tubby_char_sheet_PIL.size, tubby_char_sheet_PIL.mode)
 
@@ -21,9 +24,14 @@ lanky_animation = "idle"
 lanky_animation_timer = 0
 lanky_to_render = (0, 0, 1, 1)
 
-lanky_char_sheet_PIL.thumbnail((1440, 540), Image.ANTIALIAS)
+lanky_char_sheet_PIL.thumbnail((1760, 1100), Image.ANTIALIAS)
 lanky_char_sheet_string = lanky_char_sheet_PIL.tobytes(), lanky_char_sheet_PIL.size, lanky_char_sheet_PIL.mode
 lanky_char_sheet = pg.image.fromstring(lanky_char_sheet_PIL.tobytes(), lanky_char_sheet_PIL.size, lanky_char_sheet_PIL.mode)
+
+level_sheet = pg.image.load("Level_1_frame.png")
+level_animation_timer = 0
+level_to_render = (0, 0, 1, 1)
+
 
 # Initialise a full screen display object
 screen = pg.display.set_mode((1920, 1080), pg.FULLSCREEN)  # *ADD FULLSCREEN TO MAKE THE PROGRAM FULLSCREEN*
@@ -98,6 +106,7 @@ Lanky_max_vel = 10
 def move_thread_func():  # thread function for movement to keep movement speed consistent.
 
     global move_keys_pressed  # make move_keys_pressed accessible in this function
+    global tubby_touching_ground, lanky_touching_ground
 
     if running:  # if the program shouldn't quit
 
@@ -283,6 +292,7 @@ def animation_thread_func():
 
     global tubby_animation, tubby_animation_timer, tubby_to_render
     global lanky_animation, lanky_animation_timer, lanky_to_render
+    global level_animation_timer, level_to_render
     if running:  # if the program shouldn't quit
 
         animation_thread = threading.Timer(1 / 10, animation_thread_func)  # redefine the function so it can run again
@@ -290,8 +300,11 @@ def animation_thread_func():
 
         tubby_last_animation = tubby_animation
 
-        if -1 < Tubby.move.velx < 1:
-            tubby_animation = "idle"
+        if -1 <= Tubby.move.velx <= 1 and tubby_animation == "walk right":
+            tubby_animation = "idle right"
+
+        if -1 <= Tubby.move.velx <= 1 and tubby_animation == "walk left":
+            tubby_animation = "idle left"
 
         if Tubby.move.velx > 1:
             tubby_animation = "walk right"
@@ -299,35 +312,53 @@ def animation_thread_func():
         if Tubby.move.velx < -1:
             tubby_animation = "walk left"
 
+        tubby_animation_timer += 1
+
         if tubby_last_animation != tubby_animation:
             tubby_animation_timer = 0
 
-        tubby_animation_timer += 1
+        if tubby_animation == "idle right":
+            tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 120, 120, 120, 120)
 
-        if tubby_animation == "idle":
-            tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 90, 90, 90, 90)
+        if tubby_animation == "idle left":
+            tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 120, 480, 120, 120)
 
         if tubby_animation == "walk right":
-            tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 90, 0, 90, 90)
+            tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 120, 0, 120, 120)
+
+        if tubby_animation == "walk left":
+            tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 120, 360, 120, 120)
 
         lanky_last_animation = lanky_animation
 
-        if -1 < Lanky.move.velx < 1:
+        if -1 <= Lanky.move.velx <= 1:
             lanky_animation = "idle"
 
         if Lanky.move.velx > 1:
             lanky_animation = "walk right"
 
-        if lanky_last_animation != lanky_animation:
-            lanky_animation_timer = 0
+        if Lanky.move.velx < -1:
+            lanky_animation = "walk left"
 
         lanky_animation_timer += 1
 
+        if lanky_last_animation != lanky_animation:
+            lanky_animation_timer = 0
+
         if lanky_animation == "idle":
-            lanky_to_render = (math.fmod(lanky_animation_timer, 8) * 180, 180, 180, 180)
+            lanky_to_render = (math.fmod(lanky_animation_timer, 8) * 220, 220, 220, 220)
 
         if lanky_animation == "walk right":
-            lanky_to_render = (math.fmod(lanky_animation_timer, 8) * 180, 0, 180, 180)
+            lanky_to_render = (math.fmod(lanky_animation_timer, 8) * 220, 0, 220, 220)
+
+        if lanky_animation == "walk left":
+            lanky_to_render = (math.fmod(lanky_animation_timer, 8) * 220, 660, 220, 220)
+
+        level_animation_timer += 1
+
+        # level_to_render = (math.fmod(level_animation_timer, 11) * 1080, 0, 1080, 1920)
+
+        level_to_render = (0, 0, 1920, 1080)
 
 
 class Box:  # Box is a class for displaying a rectangle
@@ -389,10 +420,10 @@ for line in level_lines:  # for each line in the level...
     platform_temp = Platform(platform_rect, platform_color)  # create a platform with the proper rect and color
     all_platforms.append(platform_temp)  # add that platform to the platform list *move to the class init() function*
 
-Tubby = Creature((1000, 920), (0, 0), (0, 0, 90, 90))  # create the creature that represents tubby
+Tubby = Creature((1000, 920), (0, 0), (0, 0, 70, 90))  # create the creature that represents tubby
 Tubby.create_box(Tubby.move.hb(), (200, 0, 0))  # create a box to show the hitbox of tubby
 
-Lanky = Creature((450, 820), (0, 0), (0, 0, 90, 180))  # create a creature that represents lanky
+Lanky = Creature((450, 820), (0, 0), (0, 0, 55, 180))  # create a creature that represents lanky
 Lanky.create_box(Lanky.move.hb(), (0, 200, 200))  # create a box to show the hitbox of lanky
 
 move_thread_func()  # start the move function loop
@@ -418,19 +449,22 @@ while running:  # if the program is running...
     Tubby_x = Tubby.move.posx + Tubby.box.x  # find the rect x
     Tubby_y = Tubby.move.posy + Tubby.box.y  # find the rect y
     # render that creature
-    pg.draw.rect(screen, Tubby.box.color, (Tubby_x, Tubby_y, Tubby.box.w, Tubby.box.h))
+    # pg.draw.rect(screen, Tubby.box.color, (Tubby_x, Tubby_y, Tubby.box.w, Tubby.box.h))
 
     Lanky_x = Lanky.move.posx + Lanky.box.x  # find the rect x
     Lanky_y = Lanky.move.posy + Lanky.box.y  # find the rect y
     # render that creature
-    pg.draw.rect(screen, Lanky.box.color, (Lanky_x, Lanky_y, Lanky.box.w, Lanky.box.h))
+    # pg.draw.rect(screen, Lanky.box.color, (Lanky_x, Lanky_y, Lanky.box.w, Lanky.box.h))
 
-    screen.blit(tubby_char_sheet, (Tubby.move.posx, Tubby.move.posy), tubby_to_render)
-    screen.blit(lanky_char_sheet, (Lanky.move.posx - 45, Lanky.move.posy), lanky_to_render)
+    screen.blit(tubby_char_sheet, (Tubby.move.posx - 20, Tubby.move.posy - 28), tubby_to_render)
+    screen.blit(lanky_char_sheet, (Lanky.move.posx - 80, Lanky.move.posy - 39), lanky_to_render)
+    # screen.blit(level_sheet, (0, 0), level_to_render)
 
+    """
     for platform in all_platforms:  # for each platform
         # render that platform
         pg.draw.rect(screen, platform.box.color, (platform.x, platform.y, platform.w, platform.h))
+    # """
 
     pg.display.flip()  # update the display window
 
