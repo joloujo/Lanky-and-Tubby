@@ -11,13 +11,15 @@ tubby_touching_ground = True
 lanky_touching_ground = True
 
 tubby_char_sheet_PIL = Image.open("tubby_char_sheet.png")
-tubby_animation = "idle right"
+tubby_facing = "right"
+tubby_doing = "idle"
 tubby_animation_timer = 0
 tubby_to_render = (0, 0, 1, 1)
 
 tubby_char_sheet_PIL.thumbnail((960, 600), Image.ANTIALIAS)
 tubby_char_sheet_string = tubby_char_sheet_PIL.tobytes(), tubby_char_sheet_PIL.size, tubby_char_sheet_PIL.mode
-tubby_char_sheet = pg.image.fromstring(tubby_char_sheet_PIL.tobytes(), tubby_char_sheet_PIL.size, tubby_char_sheet_PIL.mode)
+tubby_char_sheet = pg.image.fromstring(tubby_char_sheet_PIL.tobytes(), tubby_char_sheet_PIL.size,
+                                       tubby_char_sheet_PIL.mode)
 
 lanky_char_sheet_PIL = Image.open("lanky_char_sheet.png")
 lanky_animation = "idle"
@@ -26,12 +28,21 @@ lanky_to_render = (0, 0, 1, 1)
 
 lanky_char_sheet_PIL.thumbnail((1760, 1100), Image.ANTIALIAS)
 lanky_char_sheet_string = lanky_char_sheet_PIL.tobytes(), lanky_char_sheet_PIL.size, lanky_char_sheet_PIL.mode
-lanky_char_sheet = pg.image.fromstring(lanky_char_sheet_PIL.tobytes(), lanky_char_sheet_PIL.size, lanky_char_sheet_PIL.mode)
+lanky_char_sheet = pg.image.fromstring(lanky_char_sheet_PIL.tobytes(), lanky_char_sheet_PIL.size,
+                                       lanky_char_sheet_PIL.mode)
 
 level_sheet = pg.image.load("Level_1_frame.png")
 level_animation_timer = 0
 level_to_render = (0, 0, 1, 1)
 
+background_sheet = [pg.image.load("hell\hell_0.png"), pg.image.load("hell\hell_1.png"),
+                    pg.image.load("hell\hell_2.png"), pg.image.load("hell\hell_3.png"),
+                    pg.image.load("hell\hell_4.png"), pg.image.load("hell\hell_5.png"),
+                    pg.image.load("hell\hell_6.png"), pg.image.load("hell\hell_7.png"),
+                    pg.image.load("hell\hell_8.png"), pg.image.load("hell\hell_9.png"),
+                    pg.image.load('hell\hell_10.png'), pg.image.load("hell\hell_11.png")]
+background_animation_timer = 0
+background_to_render = (0, 0, 1, 1)
 
 # Initialise a full screen display object
 screen = pg.display.set_mode((1920, 1080), pg.FULLSCREEN)  # *ADD FULLSCREEN TO MAKE THE PROGRAM FULLSCREEN*
@@ -289,45 +300,55 @@ def move_thread_func():  # thread function for movement to keep movement speed c
 
 
 def animation_thread_func():
-
-    global tubby_animation, tubby_animation_timer, tubby_to_render
+    global tubby_facing, tubby_doing, tubby_animation_timer, tubby_to_render
     global lanky_animation, lanky_animation_timer, lanky_to_render
     global level_animation_timer, level_to_render
+    global background_to_render, background_animation_timer
     if running:  # if the program shouldn't quit
 
         animation_thread = threading.Timer(1 / 10, animation_thread_func)  # redefine the function so it can run again
         animation_thread.start()  # restart the function
 
-        tubby_last_animation = tubby_animation
-
-        if -1 <= Tubby.move.velx <= 1 and tubby_animation == "walk right":
-            tubby_animation = "idle right"
-
-        if -1 <= Tubby.move.velx <= 1 and tubby_animation == "walk left":
-            tubby_animation = "idle left"
-
-        if Tubby.move.velx > 1:
-            tubby_animation = "walk right"
+        tubby_last_animation = tubby_facing, tubby_doing
 
         if Tubby.move.velx < -1:
-            tubby_animation = "walk left"
+            tubby_facing = "left"
+
+        if Tubby.move.velx > 1:
+            tubby_facing = "right"
+
+        if tubby_touching_ground:
+            if -1 <= Tubby.move.velx <= 1:
+                tubby_doing = "idle"
+            else:
+                tubby_doing = "walk"
+        else:
+            tubby_doing = "jump"
 
         tubby_animation_timer += 1
 
-        if tubby_last_animation != tubby_animation:
+        if tubby_last_animation != (tubby_facing, tubby_doing):
             tubby_animation_timer = 0
 
-        if tubby_animation == "idle right":
-            tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 120, 120, 120, 120)
+        if tubby_doing == "idle":
+            if tubby_facing == "right":
+                tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 120, 120, 120, 120)
+            else:
+                tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 120, 480, 120, 120)
 
-        if tubby_animation == "idle left":
-            tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 120, 480, 120, 120)
+        if tubby_doing == "walk":
+            if tubby_facing == "right":
+                tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 120, 0, 120, 120)
+            else:
+                tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 120, 360, 120, 120)
 
-        if tubby_animation == "walk right":
-            tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 120, 0, 120, 120)
+        if tubby_doing == "jump":
+            if tubby_facing == "right":
+                tubby_to_render = (0, 240, 120, 120)
+            else:
+                tubby_to_render = (120, 240, 120, 120)
 
-        if tubby_animation == "walk left":
-            tubby_to_render = (math.fmod(tubby_animation_timer, 8) * 120, 360, 120, 120)
+        pass
 
         lanky_last_animation = lanky_animation
 
@@ -359,6 +380,11 @@ def animation_thread_func():
         # level_to_render = (math.fmod(level_animation_timer, 11) * 1080, 0, 1080, 1920)
 
         level_to_render = (0, 0, 1920, 1080)
+
+        background_animation_timer += 1
+        if background_animation_timer >= 12:
+            background_animation_timer = 0
+        background_to_render = (0, 0, 1920, 1080)
 
 
 class Box:  # Box is a class for displaying a rectangle
@@ -456,9 +482,10 @@ while running:  # if the program is running...
     # render that creature
     # pg.draw.rect(screen, Lanky.box.color, (Lanky_x, Lanky_y, Lanky.box.w, Lanky.box.h))
 
+    screen.blit(background_sheet[background_animation_timer], (0, 0), background_to_render)
     screen.blit(tubby_char_sheet, (Tubby.move.posx - 20, Tubby.move.posy - 28), tubby_to_render)
     screen.blit(lanky_char_sheet, (Lanky.move.posx - 80, Lanky.move.posy - 39), lanky_to_render)
-    # screen.blit(level_sheet, (0, 0), level_to_render)
+    screen.blit(level_sheet, (0, 0), level_to_render)
 
     """
     for platform in all_platforms:  # for each platform
