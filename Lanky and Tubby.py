@@ -2,6 +2,7 @@ import pygame as pg  # pygame is used for graphics and keyboard interaction
 import threading  # threading is used for keeping movement and animation at a consistent speed
 import math  # math is used for math, wow!
 from PIL import Image
+import random
 
 pg.init()
 
@@ -373,6 +374,8 @@ def animation_thread_func():
             lanky_animation_timer = 0
 
         if lanky_doing == "idle":
+            if math.fmod(lanky_animation_timer, 8) == 1 and random.randint(1, 100) < 95:
+                lanky_animation_timer -= 1
             lanky_to_render = (math.fmod(lanky_animation_timer, 8) * 220, 220, 220, 220)
 
         if lanky_doing == "walk":
@@ -494,15 +497,15 @@ while running:  # if the program is running...
     # render that creature
     # pg.draw.rect(screen, Lanky.box.color, (Lanky_x, Lanky_y, Lanky.box.w, Lanky.box.h))
 
-    screen.blit(background_sheet[background_animation_timer], (0, 0), background_to_render)
+    # screen.blit(background_sheet[background_animation_timer], (0, 0), background_to_render)
     screen.blit(tubby_char_sheet, (Tubby.move.posx - 20, Tubby.move.posy - 28), tubby_to_render)
     if lanky_doing != "jump":
         screen.blit(lanky_char_sheet, (Lanky.move.posx - 80, Lanky.move.posy - 39), lanky_to_render)
     else:
         screen.blit(lanky_char_sheet, (Lanky.move.posx - 80, Lanky.move.posy - 9), lanky_to_render)
-    screen.blit(level_sheet, (0, 0), level_to_render)
+    # screen.blit(level_sheet, (0, 0), level_to_render)
 
-    """
+    # """
     for platform in all_platforms:  # for each platform
         # render that platform
         pg.draw.rect(screen, platform.box.color, (platform.x, platform.y, platform.w, platform.h))
