@@ -22,7 +22,8 @@ tubby_char_sheet = pg.image.fromstring(tubby_char_sheet_PIL.tobytes(), tubby_cha
                                        tubby_char_sheet_PIL.mode)
 
 lanky_char_sheet_PIL = Image.open("lanky_char_sheet.png")
-lanky_animation = "idle"
+lanky_facing = "right"
+lanky_doing = "idle"
 lanky_animation_timer = 0
 lanky_to_render = (0, 0, 1, 1)
 
@@ -301,7 +302,7 @@ def move_thread_func():  # thread function for movement to keep movement speed c
 
 def animation_thread_func():
     global tubby_facing, tubby_doing, tubby_animation_timer, tubby_to_render
-    global lanky_animation, lanky_animation_timer, lanky_to_render
+    global lanky_facing, lanky_doing, lanky_animation_timer, lanky_to_render
     global level_animation_timer, level_to_render
     global background_to_render, background_animation_timer
     if running:  # if the program shouldn't quit
@@ -311,14 +312,14 @@ def animation_thread_func():
 
         tubby_last_animation = tubby_facing, tubby_doing
 
-        if Tubby.move.velx < -1:
+        if Tubby.move.velx <= -1:
             tubby_facing = "left"
 
-        if Tubby.move.velx > 1:
+        if Tubby.move.velx >= 1:
             tubby_facing = "right"
 
         if tubby_touching_ground:
-            if -1 <= Tubby.move.velx <= 1:
+            if -1 < Tubby.move.velx < 1:
                 tubby_doing = "idle"
             else:
                 tubby_doing = "walk"
@@ -350,30 +351,41 @@ def animation_thread_func():
 
         pass
 
-        lanky_last_animation = lanky_animation
+        lanky_last_animation = lanky_facing, lanky_doing
 
-        if -1 <= Lanky.move.velx <= 1:
-            lanky_animation = "idle"
+        if Lanky.move.velx >= 1:
+            lanky_facing = "right"
 
-        if Lanky.move.velx > 1:
-            lanky_animation = "walk right"
+        if Lanky.move.velx <= -1:
+            lanky_facing = "left"
 
-        if Lanky.move.velx < -1:
-            lanky_animation = "walk left"
+        if lanky_touching_ground:
+            if -1 < Lanky.move.velx < 1:
+                lanky_doing = "idle"
+            else:
+                lanky_doing = "walk"
+        else:
+            lanky_doing = "jump"
 
         lanky_animation_timer += 1
 
-        if lanky_last_animation != lanky_animation:
+        if lanky_last_animation != (lanky_facing, lanky_doing):
             lanky_animation_timer = 0
 
-        if lanky_animation == "idle":
+        if lanky_doing == "idle":
             lanky_to_render = (math.fmod(lanky_animation_timer, 8) * 220, 220, 220, 220)
 
-        if lanky_animation == "walk right":
-            lanky_to_render = (math.fmod(lanky_animation_timer, 8) * 220, 0, 220, 220)
+        if lanky_doing == "walk":
+            if lanky_facing == "right":
+                lanky_to_render = (math.fmod(lanky_animation_timer, 8) * 220, 0, 220, 220)
+            else:
+                lanky_to_render = (math.fmod(lanky_animation_timer, 8) * 220, 660, 220, 220)
 
-        if lanky_animation == "walk left":
-            lanky_to_render = (math.fmod(lanky_animation_timer, 8) * 220, 660, 220, 220)
+        if lanky_doing == "jump":
+            if lanky_facing == "right":
+                lanky_to_render = (0, 440, 220, 200)
+            else:
+                lanky_to_render = (220, 440, 220, 220)
 
         level_animation_timer += 1
 
@@ -484,7 +496,10 @@ while running:  # if the program is running...
 
     screen.blit(background_sheet[background_animation_timer], (0, 0), background_to_render)
     screen.blit(tubby_char_sheet, (Tubby.move.posx - 20, Tubby.move.posy - 28), tubby_to_render)
-    screen.blit(lanky_char_sheet, (Lanky.move.posx - 80, Lanky.move.posy - 39), lanky_to_render)
+    if lanky_doing != "jump":
+        screen.blit(lanky_char_sheet, (Lanky.move.posx - 80, Lanky.move.posy - 39), lanky_to_render)
+    else:
+        screen.blit(lanky_char_sheet, (Lanky.move.posx - 80, Lanky.move.posy - 9), lanky_to_render)
     screen.blit(level_sheet, (0, 0), level_to_render)
 
     """
