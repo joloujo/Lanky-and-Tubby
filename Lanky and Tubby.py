@@ -511,6 +511,9 @@ while running:  # if the program is running...
         pg.draw.rect(screen, platform.box.color, (platform.x, platform.y, platform.w, platform.h))
     # """
 
+    pg.draw.rect(screen, (255, 169, 169), (1660, 430, 100, 10))
+    pg.draw.rect(screen, (192, 52, 239), (350, 1030, 100, 10))
+
     pg.display.flip()  # update the display window
 
 pg.quit()  # terminate pygame
