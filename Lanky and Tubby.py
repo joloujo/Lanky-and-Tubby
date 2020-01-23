@@ -57,12 +57,17 @@ pg.display.flip()
 pg.event.get()
 key_states = [0] * len(pg.key.get_pressed())
 # define important keys
-keys = {"esc": 27, "w": 119, "a": 97, "s": 115, "d": 100, "up": 273, "down": 274, "right": 275, "left": 276, "r": 114}
+keys = {"esc": 27, "w": 119, "a": 97, "s": 115, "d": 100, "up": 273, "down": 274, "right": 275, "left": 276, "r": 114,
+        "l": 108, "b": 98}
 
 all_creatures = []  # create an empty list to keep track of all creatures that are created
 all_platforms = []  # create an empty list to keep track of all platforms that are created
 
 comic_sans = pg.font.SysFont('Comic Sans MS', 100)
+
+show_background = False
+show_level = False
+
 
 def touching(rect_1, rect_2):
     touching_x = rect_2[0] < rect_1[0] + rect_1[2] and rect_1[0] < rect_2[0] + rect_2[2]  # overlap on x axis?
@@ -497,6 +502,18 @@ while running:  # if the program is running...
         Lanky.move.posy = 750
         Lanky.move.vely = -10
 
+    if key_states[keys["l"]] == 1:
+        if show_level:
+            show_level = False
+        else:
+            show_level = True
+
+    if key_states[keys["b"]] == 1:
+        if show_background:
+            show_background = False
+        else:
+            show_background = True
+
     screen.fill((100, 100, 100))  # fill the background with the background color
 
     Tubby_x = Tubby.move.posx + Tubby.box.x  # find the rect x
@@ -509,19 +526,22 @@ while running:  # if the program is running...
     # render that creature
     # pg.draw.rect(screen, Lanky.box.color, (Lanky_x, Lanky_y, Lanky.box.w, Lanky.box.h))
 
-    # screen.blit(background_sheet[background_animation_timer], (0, 0), background_to_render)
+    if show_background:
+        screen.blit(background_sheet[background_animation_timer], (0, 0), background_to_render)
+
     screen.blit(tubby_char_sheet, (Tubby.move.posx - 20, Tubby.move.posy - 28), tubby_to_render)
     if lanky_doing != "jump":
         screen.blit(lanky_char_sheet, (Lanky.move.posx - 80, Lanky.move.posy - 39), lanky_to_render)
     else:
         screen.blit(lanky_char_sheet, (Lanky.move.posx - 80, Lanky.move.posy - 9), lanky_to_render)
-    # screen.blit(level_sheet, (0, 0), level_to_render)
 
-    # """
-    for platform in all_platforms:  # for each platform
-        # render that platform
-        pg.draw.rect(screen, platform.box.color, (platform.x, platform.y, platform.w, platform.h))
-    # """
+    if show_level:
+        screen.blit(level_sheet, (0, 0), level_to_render)
+
+    if not show_level:
+        for platform in all_platforms:  # for each platform
+            # render that platform
+            pg.draw.rect(screen, platform.box.color, (platform.x, platform.y, platform.w, platform.h))
 
     Lanky_and_Tubby_on_platforms = 0
 
