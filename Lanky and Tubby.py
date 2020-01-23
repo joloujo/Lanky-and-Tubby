@@ -5,6 +5,7 @@ from PIL import Image
 import random
 
 pg.init()
+pg.font.init()
 
 running = True  # this is the variable that keeps track of if the program should quit or not
 
@@ -56,11 +57,12 @@ pg.display.flip()
 pg.event.get()
 key_states = [0] * len(pg.key.get_pressed())
 # define important keys
-keys = {"esc": 27, "w": 119, "a": 97, "s": 115, "d": 100, "up": 273, "down": 274, "right": 275, "left": 276}
+keys = {"esc": 27, "w": 119, "a": 97, "s": 115, "d": 100, "up": 273, "down": 274, "right": 275, "left": 276, "r": 114}
 
 all_creatures = []  # create an empty list to keep track of all creatures that are created
 all_platforms = []  # create an empty list to keep track of all platforms that are created
 
+comic_sans = pg.font.SysFont('Comic Sans MS', 100)
 
 def touching(rect_1, rect_2):
     touching_x = rect_2[0] < rect_1[0] + rect_1[2] and rect_1[0] < rect_2[0] + rect_2[2]  # overlap on x axis?
@@ -461,11 +463,13 @@ for line in level_lines:  # for each line in the level...
     platform_temp = Platform(platform_rect, platform_color)  # create a platform with the proper rect and color
     all_platforms.append(platform_temp)  # add that platform to the platform list *move to the class init() function*
 
-Tubby = Creature((1000, 920), (0, 0), (0, 0, 70, 90))  # create the creature that represents tubby
+Tubby = Creature((1000, 850), (0, -10), (0, 0, 70, 90))  # create the creature that represents tubby
 Tubby.create_box(Tubby.move.hb(), (200, 0, 0))  # create a box to show the hitbox of tubby
 
-Lanky = Creature((450, 820), (0, 0), (0, 0, 55, 180))  # create a creature that represents lanky
+Lanky = Creature((475, 750), (0, -10), (0, 0, 55, 180))  # create a creature that represents lanky
 Lanky.create_box(Lanky.move.hb(), (0, 200, 200))  # create a box to show the hitbox of lanky
+
+win_text = comic_sans.render("You Win!", False, (0, 0, 0), )
 
 move_thread_func()  # start the move function loop
 animation_thread_func()  # start the animation function loop
@@ -484,6 +488,14 @@ while running:  # if the program is running...
 
     if key_states[keys["esc"]] >= 1:  # if the escape key is pressed
         running = False  # quit the game
+
+    if key_states[keys["r"]] == 1:
+        Tubby.move.posx = 1000
+        Tubby.move.posy = 850
+        Tubby.move.vely = -10
+        Lanky.move.posx = 475
+        Lanky.move.posy = 750
+        Lanky.move.vely = -10
 
     screen.fill((100, 100, 100))  # fill the background with the background color
 
@@ -511,10 +523,25 @@ while running:  # if the program is running...
         pg.draw.rect(screen, platform.box.color, (platform.x, platform.y, platform.w, platform.h))
     # """
 
+    Lanky_and_Tubby_on_platforms = 0
+
+    if 1660 - 70 <= Tubby.move.posx <= 1660 + 100 and 430 - 95 <= Tubby.move.posy <= 430 - 85:
+        pg.draw.rect(screen, (255, 255, 0), (1655, 430, 110, 15))
+        Lanky_and_Tubby_on_platforms += 1
+
+    if 350 - 55 <= Lanky.move.posx <= 350 + 100 and 1030 - 185 <= Lanky.move.posy <= 1030 - 175:
+        pg.draw.rect(screen, (255, 255, 0), (345, 1030, 110, 15))
+        Lanky_and_Tubby_on_platforms += 1
+
+    if Lanky_and_Tubby_on_platforms == 2:
+        pg.draw.rect(screen, (255, 255, 0), (720, 465, 480, 150))
+        screen.blit(win_text, (760, 465))
+
     pg.draw.rect(screen, (255, 169, 169), (1660, 430, 100, 10))
     pg.draw.rect(screen, (192, 52, 239), (350, 1030, 100, 10))
 
     pg.display.flip()  # update the display window
 
+pg.font.quit()
 pg.quit()  # terminate pygame
 quit()  # terminate the program
